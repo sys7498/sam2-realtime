@@ -8,6 +8,7 @@ import os
 import warnings
 from threading import Thread
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -100,6 +101,17 @@ def _load_img_as_tensor(img_path, image_size):
     video_width, video_height = img_pil.size  # the original video size
     return img, video_height, video_width
 
+def _load_cv_img_as_tensor(img_cv, image_size):
+    img_pil = Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
+    img_np = np.array(img_pil.convert("RGB").resize((image_size, image_size)))
+    if img_np.dtype == np.uint8:  # np.uint8 is expected for JPEG images
+        img_np = img_np / 255.0
+    else:
+        raise RuntimeError(f"Unknown image dtype: {img_np.dtype} on {img_cv}")
+    img = torch.from_numpy(img_np).permute(2, 0, 1)
+    image_width, image_height = img_pil.size  # the original video size
+    return img, image_height, image_width
+
 
 class AsyncVideoFrameLoader:
     """
@@ -167,6 +179,7 @@ class AsyncVideoFrameLoader:
 
     def __len__(self):
         return len(self.images)
+
 
 
 def load_video_frames(
@@ -307,6 +320,31 @@ def load_video_frames_from_video_file(
     images -= img_mean
     images /= img_std
     return images, video_height, video_width
+
+def load_frame(
+    img_cv, # np.ndarray like image
+    offload_video_to_cpu,
+    image_size = 1024,
+    img_mean=(0.485, 0.456, 0.406),
+    img_std=(0.229, 0.224, 0.225),
+    compute_device=torch.device("cuda"),
+):
+    """
+    Load the frame from image(open by opencv). The frame is resized to image_size as in
+    the model and are loaded to GPU if offload_video_to_cpu=False.
+    """
+    img_mean = torch.tensor(img_mean, dtype=torch.float32)[:, None, None]
+    img_std = torch.tensor(img_std, dtype=torch.float32)[:, None, None]
+    # Get the original image height and width
+    img, img_height, img_width = _load_cv_img_as_tensor(img_cv, image_size)
+    if not offload_video_to_cpu:
+        img = img.to(compute_device)
+        img_mean = img_mean.to(compute_device)
+        img_std = img_std.to(compute_device)
+    # normalize by mean and std
+    img -= img_mean
+    img /= img_std
+    return img, img_height, img_width
 
 
 def fill_holes_in_mask_scores(mask, max_area):
