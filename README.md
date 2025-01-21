@@ -2,6 +2,7 @@
 This code is based on SAM2. For realtime task, some methods are added.
 
 added sam2/sam2_realtime_predictor.py
+
 edited sam2/utils/misc.py
 
 ## License
