@@ -1,10 +1,6 @@
 # SAM2-Realtime
 This code is based on SAM2. For realtime task, some methods are added.
 
-added sam2/sam2_realtime_predictor.py
-
-edited sam2/utils/misc.py
-
 ## License
 
 The SAM 2 model checkpoints, SAM 2 demo code (front-end and back-end), and SAM 2 training code are licensed under [Apache 2.0](./LICENSE), however the [Inter Font](https://github.com/rsms/inter?tab=OFL-1.1-1-ov-file) and [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) used in the SAM 2 demo code are made available under the [SIL Open Font License, version 1.1](https://openfontlicense.org/open-font-license-official-text/).
